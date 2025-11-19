@@ -120,7 +120,7 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <!-- <h2 class="h5 mb-0">Todos — プロジェクト: <span class="badge bg-secondary">{{currentProjectName}}</span></h2> -->
                 <div class="input-group input-group-sm" style="width:480px">
-                    <input v-model="filterText" class="form-control" placeholder="フィルタ" style="width: 200px;"/>
+                    <input v-model="filterText" class="form-control" placeholder="フィルタ" style="width: 200px;" />
                     <select v-model.number="selectedTagFilter" class="form-select" style="width:140px">
                         <option :value="0">タグ: すべて</option>
                         <option v-for="tg in tags" :key="tg.id" :value="tg.id">{{tg.name}}</option>
@@ -136,10 +136,13 @@
 
             <div class="row gy-2">
                 <div v-for="t in filteredTodos" :key="t.id" class="col-12">
-                    <div class="card">
+                    <div :class="['card', isOverdue(t) ? 'border border-danger' : '']">
                         <div class="card-body d-flex justify-content-between align-items-start">
                             <div>
-                                <h6 class="card-title mb-1">{{t.title}} <span class="ms-2"><span class="badge" :class="statusBadgeClass(t.status)">{{statusLabel(t.status)}}</span></span></h6>
+                                <h6 class="card-title mb-1">{{t.title}} <span class="ms-2"><span class="badge"
+                                            :class="statusBadgeClass(t.status)">{{statusLabel(t.status)}}</span></span>
+                                    <span v-if="isOverdue(t)" class="badge bg-danger ms-2">期限切れ</span>
+                                </h6>
                                 <p class="card-text text-muted small mb-1">{{t.description}}</p>
                                 <div class="small text-muted">優先度: {{priorityLabel(t.priority)}} • {{t.due_date}}</div>
                                 <div class="mt-1">
@@ -254,8 +257,15 @@
 
                 // helpers
                 function priorityLabel(v) { return ['低', '中', '高'][v] || '不明'; }
-                function statusLabel(s) { return s===0 ? '未完了' : (s===1 ? '完了' : (s===2 ? 'アーカイブ' : '不明')); }
-                function statusBadgeClass(s) { return s===0 ? 'bg-warning text-dark' : (s===1 ? 'bg-success' : (s===2 ? 'bg-secondary' : 'bg-light')); }
+                function statusLabel(s) { return s === 0 ? '未完了' : (s === 1 ? '完了' : (s === 2 ? 'アーカイブ' : '不明')); }
+                function statusBadgeClass(s) { return s === 0 ? 'bg-warning text-dark' : (s === 1 ? 'bg-success' : (s === 2 ? 'bg-secondary' : 'bg-light')); }
+                function isOverdue(t) {
+                    if (!t.due_date) return false;
+                    if (t.status === 1 || t.status === 2) return false; // completed or archived
+                    const due = new Date(t.due_date);
+                    const now = new Date();
+                    return due < now;
+                }
 
                 function run(sql, params = []) {
                     const db = dbRef.value; if (!db) throw new Error('DB not ready');
@@ -458,7 +468,7 @@
                     filterText, filterStatus, selectedTagFilter, form, editing, priorityLabel, selectProject, currentProjectName,
                     filteredTodos, todoTags, createProject, createTag, createTodo, addTagToForm, selectedTagToAdd, formTags,
                     openEdit, cancelEdit, updateTodo, toggleComplete, archiveTodo, deleteTodo, deleteTag, deleteProject, newTagName,
-                    exportDB, importDBPrompt, handleImportFile, statusBadgeClass, statusLabel
+                    exportDB, importDBPrompt, handleImportFile, statusBadgeClass, statusLabel, isOverdue
                 };
             }
         }).mount('#app');
